@@ -4,8 +4,14 @@
 static const Signal_Driver* signalDriver;
 #if SIGNAL_MAX_NUM == -1
     static Signal* lastSignal = SIGNAL_NULL;
+
+    #define __signals()         lastSignal
+    #define __next(S)           S = (S)->Previous
 #else
     static Signal signals[SIGNAL_MAX_NUM] = {0};
+
+    #define __signals()         signals
+    #define __next(S)           S++
 #endif // SIGNAL_MAX_NUM == -1
 
 /**
@@ -22,11 +28,10 @@ void Signal_init(const Signal_Driver* driver) {
  */
 void Signal_handle(void) {
     Signal_State state;
+    Signal* pSignal = __signals();
 #if SIGNAL_MAX_NUM == -1
-    Signal* pSignal = lastSignal;
     while (SIGNAL_NULL != pSignal) {
 #else
-    Signal* pSignal = signals;
     uint8_t len = SIGNAL_MAX_NUM;
     while (len-- > 0) {
         if (pSignal->Configured) {
@@ -35,15 +40,14 @@ void Signal_handle(void) {
         if (pSignal->Enabled) {
     #endif // SIGNAL_ENABLE_FLAG
         // update current state
-        state =(Signal_State) (((pSignal->State << 1) | signalDriver->readPin(pSignal->Config)) & 0x03);
+        state = (Signal_State) (((pSignal->State << 1) | signalDriver->readPin(pSignal->Config)) & 0x03);
         pSignal->State = state;
         // call callback on new state
 		if (pSignal->NotActive == Signal_NotHandled
         #if SIGNAL_IDLE != -1
             && SIGNAL_IDLE != state
         #endif  
-            ) 
-    {
+        ) {
         #if SIGNAL_MULTI_CALLBACK
             if (pSignal->Callbacks.callbacks[state]) {
             #if SIGNAL_IDLE != -1
@@ -68,13 +72,10 @@ void Signal_handle(void) {
     #if SIGNAL_ENABLE_FLAG
         }
     #endif // Signal_ENABLE_FLAG
-    #if SIGNAL_MAX_NUM == -1
-        // switch to previous Signal
-        pSignal = pSignal->Previous;
-    #else
+    #if SIGNAL_MAX_NUM != -1
         }
-        pSignal++;
-    #endif // SIGNAL_MAX_NUM == -1
+    #endif // Signal_ENABLE_FLAG
+        __next(pSignal);
     }
 }
 
@@ -126,12 +127,7 @@ uint8_t Signal_add(Signal* signal, const Signal_PinConfig* config) {
     if (SIGNAL_NULL == signal) {
         return 0;
     }
-    //Signal_State stateT;
-    
-    //stateT = (Signal_State) (((stateT << 1) | signalDriver->readPin(signal->Config)) & 0x03);
     // add new signal to list
-    
-    //signal->NotActive = Signal_NotHandled;
     Signal_setConfig(signal, config);
     // init IOs
     signalDriver->initPin(config);
@@ -235,14 +231,12 @@ void Signal_onLow(Signal* signal, Signal_Callback cb) {
 void Signal_onRising(Signal* signal, Signal_Callback cb) {
     signal->Callbacks.onRising = cb;
 }
-void Signal_onFailing(Signal* signal, Signal_Callback cb) {
-    signal->Callbacks.onFailing = cb;
+void Signal_onFalling(Signal* signal, Signal_Callback cb) {
+    signal->Callbacks.onFalling = cb;
 }
-
 void Signal_onHigh(Signal* signal, Signal_Callback cb) {
     signal->Callbacks.onHigh = cb;
 }
-
 #else
 void Signal_onChange(Signal* signal, Signal_Callback cb) {
     Signal->Callbacks.onChange = cb;
