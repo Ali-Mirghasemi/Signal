@@ -176,7 +176,7 @@ struct _Signal {
 #if SIGNAL_MAX_NUM == -1
     struct _Signal*             Previous;               			/**< point to previous Signal, if it's null show they Signal is end of linked list */
 #endif // SIGNAL_MAX_NUM == -1
-#if Signal_ARGS
+#if SIGNAL_ARGS
     void*                       Args;
 #endif
     const Signal_PinConfig*     Config;                 			/**< hold pointer to pin configuration */
@@ -217,7 +217,7 @@ Signal*  Signal_find(const Signal_PinConfig* config);
     uint8_t Signal_isEnabled(Signal* signal);
 #endif
 
-#if Signal_ARGS
+#if SIGNAL_ARGS
     void  Signal_setArgs(Signal*, void* args);
     void* Signal_getArgs(Signal* signal);
 #endif
