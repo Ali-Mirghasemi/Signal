@@ -2,11 +2,10 @@
  * @file Signal.h
  * @author Ali Mirghasemi (ali.mirghasemi1376@gmail.com)
  * @brief this library use for drive Signal, button and input signals
- * @version 0.2.0
- * @date 2021-06-28
+ * @version 0.1.0
+ * @date 2022-12-10
  * 
- * @copyright Copyright (c) 2021
- * 
+ * @copyright Copyright (c) 2022
  */
 
 #ifndef _SIGNAL_H_
@@ -23,12 +22,12 @@ extern "C" {
 /******************************************************************************/
 
 /**
- * @brief define SIGNAL_MULTI_CALLBACK if u want have sperate callback functions
- * for each state such as Signal_onFailing, Signal_onLow, Signal_onRising, Signal_onHigh
+ * @brief define SIGNAL_MULTI_CALLBACK if you want have separate callback functions
+ * for each state such as Signal_onFalling, Signal_onLow, Signal_onRising, Signal_onHigh
  */
 #define SIGNAL_MULTI_CALLBACK              1
 /**
- * @brief if you enable this option you can disable or enable Signal
+ * @brief if you enable this option you can disable or enable Signal in runtime
  */
 #define SIGNAL_ENABLE_FLAG                 0
 /**
@@ -41,16 +40,19 @@ extern "C" {
  */
 #define SIGNAL_CONFIG_IO                   1
 /**
- * @brief if the output of the callback <the events are executed 
- * 
+ * @brief enable it if you want have a feature to ignore incoming events
+ * set it to -1 for disable it and get all callbacks
  */
 #define SIGNAL_IDLE                        Signal_State_High
 
+#if SIGNAL_CONFIG_IO
 /**
  * @brief hold Signal io
  * user can change it to GPIO_TypeDef or anything else that system want
  */
 typedef void* Signal_IO;
+#endif // SIGNAL_CONFIG_IO
+
 /**
  * @brief hold Signal pin num or pin bit
  * user can change it to uint8_t for 8-bit systems like AVR
@@ -65,7 +67,7 @@ typedef uint16_t Signal_Pin;
 #define SIGNAL_MAX_NUM                     3
 
 /**
- * @brief user can store some args in Signal struct and retrive them in callbacks
+ * @brief user can store some args in Signal struct and retrieve them in callbacks
  */
 #define SIGNAL_ARGS                        0
 
@@ -87,13 +89,13 @@ typedef struct {
 /**
  * @brief Signal state
  *     _______               ___(High)___
- * (Failing)<-|____(Low)____|-> (Rising)
+ * (Falling)<-|____(Low)____|-> (Rising)
  */
 typedef enum {
     Signal_State_Low           = 0x00,
     Signal_State_Rising        = 0x01,
-    Signal_State_Failing       = 0x02,
-    Signal_State_High          = 0x03
+    Signal_State_Falling       = 0x02,
+    Signal_State_High          = 0x03,
 } Signal_State;
 
 /**
@@ -126,7 +128,7 @@ typedef uint8_t (*Signal_ReadPinFn)(const Signal_PinConfig* config);
 /**
  * @brief this callback call when Signal state change
  * 
- * @param Signal show which Signal changed
+ * @param signal show which Signal changed
  * @param state show current state of Signal
  * @return user can return Signal_NotHandled (0) if wanna get callback on other events 
  *                  otherwise can return Signal_Handled (1) that mean Signal handled nad next event is onPressed
@@ -139,16 +141,14 @@ typedef Signal_HandleStatus (*Signal_Callback)(Signal* signal, Signal_State stat
 typedef struct {
     Signal_InitPinFn     initPin;
     Signal_ReadPinFn     readPin;
-    #if Signal_USE_DEINIT
-        Signal_DeInitPinFn   deinitPin;
-    #endif
+#if Signal_USE_DEINIT
+    Signal_DeInitPinFn   deinitPin;
+#endif
 } Signal_Driver;
 
 
 // determine how many callbacks need
-#if SIGNAL_MULTI_CALLBACK && Signal_NONE_CALLBACK
-    #define SIGNAL_CALLBACKS_NUM 4
-#elif SIGNAL_MULTI_CALLBACK
+#if SIGNAL_MULTI_CALLBACK 
     #define SIGNAL_CALLBACKS_NUM 4
 #else
     #define SIGNAL_CALLBACKS_NUM 1
@@ -160,7 +160,7 @@ typedef union {
     #if SIGNAL_MULTI_CALLBACK
         Signal_Callback        onLow;
         Signal_Callback        onRising;
-        Signal_Callback        onFailing;
+        Signal_Callback        onFalling;
         Signal_Callback        onHigh;
     #else
         Signal_Callback        onChange;
@@ -174,19 +174,19 @@ typedef union {
  */
 struct _Signal {
 #if SIGNAL_MAX_NUM == -1
-    struct _Signal*            Previous;               			/**< point to previous Signal, if it's null show they Signal is end of linked list */
+    struct _Signal*             Previous;               			/**< point to previous Signal, if it's null show they Signal is end of linked list */
 #endif // SIGNAL_MAX_NUM == -1
 #if Signal_ARGS
-    void*                   Args;
+    void*                       Args;
 #endif
-    const Signal_PinConfig*    Config;                 			/**< hold pointer to pin configuration */
-    Signal_Callbacks           Callbacks;                          /**< hold user separate callbacks for each Signal state */
-    uint8_t                 State           : 2;    			/**< show current state of Signal*/
-    uint8_t                 NotActive       : 1;    			/**< show other states will be ignore or not */
-    uint8_t                 ActiveState     : 1;    			/**< this parameters use only when Activestate Enabled */
-    uint8_t                 Configured      : 1;                /**< this flag shows Signal is configured or not, just useful fo fixed Signal num */
-    uint8_t                 Enabled         : 1;                /**< check this flag in irq */
-    uint8_t                 Reserved        : 2;
+    const Signal_PinConfig*     Config;                 			/**< hold pointer to pin configuration */
+    Signal_Callbacks            Callbacks;                          /**< hold user separate callbacks for each Signal state */
+    uint8_t                     State           : 2;    			/**< show current state of Signal*/
+    uint8_t                     NotActive       : 1;    			/**< show other states will be ignore or not */
+    uint8_t                     ActiveState     : 1;    			/**< this parameters use only when Activestate Enabled */
+    uint8_t                     Configured      : 1;                /**< this flag shows Signal is configured or not, just useful fo fixed Signal num */
+    uint8_t                     Enabled         : 1;                /**< check this flag in irq */
+    uint8_t                     Reserved        : 2;
 };
 
 void Signal_init(const Signal_Driver* driver);
@@ -206,14 +206,11 @@ Signal*  Signal_find(const Signal_PinConfig* config);
 #if SIGNAL_MULTI_CALLBACK
     void Signal_onLow(Signal* signal, Signal_Callback cb);
     void Signal_onRising(Signal* signal, Signal_Callback cb);
-    void Signal_onFailing(Signal* signal, Signal_Callback cb);
+    void Signal_onFalling(Signal* signal, Signal_Callback cb);
     void Signal_onHigh(Signal* signal, Signal_Callback cb);
 #else
     void Signal_onChange(Signal* Signal, Signal_Callback cb);
 #endif // SIGNAL_MULTI_CALLBACK
-
-
-
 
 #if SIGNAL_ENABLE_FLAG
     void Signal_setEnabled(Signal* signal, uint8_t enabled);
