@@ -243,15 +243,6 @@ void Signal_onChange(Signal* signal, Signal_Callback cb) {
 }
 #endif // SIGNAL_MULTI_CALLBACK
 
-#if SIGNAL_ACTIVE_STATE
-void Signal_setActiveState(Signal* signal, Signal_ActiveState state) {
-    signal->ActiveState = (uint8_t) state;
-}
-Signal_ActiveState Signal_getActiveState(Signal* signal) {
-    return (Signal_ActiveState) signal->ActiveState;
-}
-#endif /* SIGNAL_ACTIVE_STATE_ENABLE */
-
 #if SIGNAL_ENABLE_FLAG
 void Signal_setEnabled(Signal* Signal, uint8_t enabled) {
     signal->Enabled = enabled;
