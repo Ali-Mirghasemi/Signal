@@ -31,6 +31,10 @@ extern "C" {
  */
 #define SIGNAL_ENABLE_FLAG                 0
 /**
+ * @brief user must define initPin function in Signal_Driver
+ */
+#define SIGNAL_USE_INIT                    0
+/**
  * @brief user must define deinitPin function in Signal_Driver
  */
 #define SIGNAL_USE_DEINIT                  0
@@ -64,7 +68,7 @@ typedef uint16_t Signal_Pin;
  * -1 for unlimited, lib use linked list 
  * x for limited Signals, lib use pointer array
  */
-#define SIGNAL_MAX_NUM                     3
+#define SIGNAL_MAX_NUM                     -1
 
 /**
  * @brief user can store some args in Signal struct and retrieve them in callbacks
@@ -139,9 +143,11 @@ typedef Signal_HandleStatus (*Signal_Callback)(Signal* signal, Signal_State stat
  * user must pass atleast init and read functions to Signal library
  */
 typedef struct {
-    Signal_InitPinFn     initPin;
     Signal_ReadPinFn     readPin;
-#if Signal_USE_DEINIT
+#if SIGNAL_USE_INIT
+    Signal_InitPinFn     initPin;
+#endif
+#if SIGNAL_USE_DEINIT
     Signal_DeInitPinFn   deinitPin;
 #endif
 } Signal_Driver;
@@ -183,10 +189,9 @@ struct _Signal {
     Signal_Callbacks            Callbacks;                          /**< hold user separate callbacks for each Signal state */
     uint8_t                     State           : 2;    			/**< show current state of Signal*/
     uint8_t                     NotActive       : 1;    			/**< show other states will be ignore or not */
-    uint8_t                     ActiveState     : 1;    			/**< this parameters use only when Activestate Enabled */
     uint8_t                     Configured      : 1;                /**< this flag shows Signal is configured or not, just useful fo fixed Signal num */
     uint8_t                     Enabled         : 1;                /**< check this flag in irq */
-    uint8_t                     Reserved        : 2;
+    uint8_t                     Reserved        : 3;
 };
 
 void Signal_init(const Signal_Driver* driver);

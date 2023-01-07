@@ -14,6 +14,18 @@ static const Signal_Driver* signalDriver;
     #define __next(S)           S++
 #endif // SIGNAL_MAX_NUM == -1
 
+#if KEY_USE_INIT
+    #define __initPin(CONF)          if (signalDriver->initPin) { signalDriver->initPin(CONF); }
+#else
+    #define __initPin(CONF)
+#endif
+
+#if KEY_USE_DEINIT
+    #define __deinitPin(CONF)        if (signalDriver->deinitPin) { signalDriver->deinitPin(CONF); }
+#else
+    #define __deinitPin(CONF)
+#endif
+
 /**
  * @brief use for initialize
  * 
@@ -23,7 +35,7 @@ void Signal_init(const Signal_Driver* driver) {
     signalDriver = driver;
 }
 /**
- * @brief user must place it in timer with 20ms ~ 50ms 
+ * @brief user must place it in timer 
  * all of callbacks handle and fire in this function
  */
 void Signal_handle(void) {
@@ -130,12 +142,12 @@ uint8_t Signal_add(Signal* signal, const Signal_PinConfig* config) {
     // add new signal to list
     Signal_setConfig(signal, config);
     // init IOs
-    signalDriver->initPin(config);
+    __initPin(config);
     signal->State = (signalDriver->readPin(signal->Config) << 1 | signalDriver->readPin(signal->Config)) & 3;
 #if SIGNAL_MAX_NUM == -1
     // add signal to linked list
     signal->Previous = lastSignal;
-    lastSignal = Signal;
+    lastSignal = signal;
 #endif // SIGNAL_MAX_NUM == -1
     signal->Configured = 1;
     signal->Enabled = 1;
@@ -153,11 +165,7 @@ uint8_t Signal_remove(Signal* remove) {
     // check last signal first
     if (remove == pSignal) {
         // deinit IO
-    #if SIGNAL_USE_DEINIT
-        if (signalDriver->deinitPin) {
-            signalDriver->deinitPin(remove->Config);
-        }
-    #endif
+        __deinitPin(remove->Config);
         // remove signal dropped from link list
         pSignal->Previous = remove->Previous;
         remove->Previous = SIGNAL_NULL;
@@ -168,11 +176,7 @@ uint8_t Signal_remove(Signal* remove) {
     while (SIGNAL_NULL != pSignal) {
         if (remove == pSignal->Previous) {
             // deinit IO
-		#if SIGNAL_USE_DEINIT
-            if (signalDriver->deinitPin) {
-                signalDriver->deinitPin(remove->Config);
-            }
-        #endif
+            __deinitPin(remove->Config);
             // remove signal dropped from link list
             pSignal->Previous = remove->Previous;
             remove->Previous = SIGNAL_NULL;
