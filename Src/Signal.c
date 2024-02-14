@@ -14,13 +14,13 @@ static const Signal_Driver* signalDriver;
     #define __next(S)           S++
 #endif // SIGNAL_MAX_NUM == -1
 
-#if KEY_USE_INIT
+#if STEPPER_USE_INIT
     #define __initPin(CONF)          if (signalDriver->initPin) { signalDriver->initPin(CONF); }
 #else
     #define __initPin(CONF)
 #endif
 
-#if KEY_USE_DEINIT
+#if STEPPER_USE_DEINIT
     #define __deinitPin(CONF)        if (signalDriver->deinitPin) { signalDriver->deinitPin(CONF); }
 #else
     #define __deinitPin(CONF)
