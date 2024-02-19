@@ -31,7 +31,7 @@ remember deinitPin function it's optional and can be disable in Configuration
 const Signal_Driver signalpadDriver = {
     Signal_initPin,
     Signal_readPin,
-#if SIGNAL_USE_DEINIT
+#if SIGNAL_IO_DEINIT
     Signal_deInitPin,
 #endif
 };
@@ -48,7 +48,7 @@ in the configuration part in top of Key.h user can change and customize library 
 #### SIGNAL_MULTI_CALLBACK
 define KEY_MULTI_CALLBACK if u want have sperate callback functions for each state such as Signal_onFalling, Signal_onLow, Signal_onRising
 
-#### SIGNAL_USE_DEINIT
+#### SIGNAL_IO_DEINIT
 user must define deinitPin function in Signal_Driver
 
 #### SIGNAL_CONFIG_IO

@@ -33,11 +33,11 @@ extern "C" {
 /**
  * @brief user must define initPin function in Signal_Driver
  */
-#define SIGNAL_USE_INIT                    0
+#define SIGNAL_IO_INIT                     0
 /**
  * @brief user must define deinitPin function in Signal_Driver
  */
-#define SIGNAL_USE_DEINIT                  0
+#define SIGNAL_IO_DEINIT                   0
 /**
  * @brief if Signal is based on pair of GPIO and Pin num must enable it
  * for arduino must disable it
@@ -144,10 +144,10 @@ typedef Signal_HandleStatus (*Signal_Callback)(Signal* signal, Signal_State stat
  */
 typedef struct {
     Signal_ReadPinFn     readPin;
-#if SIGNAL_USE_INIT
+#if SIGNAL_IO_INIT
     Signal_InitPinFn     initPin;
 #endif
-#if SIGNAL_USE_DEINIT
+#if SIGNAL_IO_DEINIT
     Signal_DeInitPinFn   deinitPin;
 #endif
 } Signal_Driver;

@@ -14,13 +14,13 @@ static const Signal_Driver* signalDriver;
     #define __next(S)           S++
 #endif // SIGNAL_MAX_NUM == -1
 
-#if STEPPER_USE_INIT
+#if SIGNAL_IO_INIT
     #define __initPin(CONF)          if (signalDriver->initPin) { signalDriver->initPin(CONF); }
 #else
     #define __initPin(CONF)
 #endif
 
-#if STEPPER_USE_DEINIT
+#if SIGNAL_IO_DEINIT
     #define __deinitPin(CONF)        if (signalDriver->deinitPin) { signalDriver->deinitPin(CONF); }
 #else
     #define __deinitPin(CONF)
@@ -39,6 +39,10 @@ void Signal_init(const Signal_Driver* driver) {
  * all of callbacks handle and fire in this function
  */
 void Signal_handle(void) {
+    if (!signalDriver) {
+        return;
+    }
+
     Signal_State state;
     Signal* pSignal = __signals();
 #if SIGNAL_MAX_NUM == -1
