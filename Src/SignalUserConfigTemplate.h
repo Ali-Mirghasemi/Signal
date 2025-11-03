@@ -1,5 +1,5 @@
 /**
- * @file SignalConfigUserTemplate.h
+ * @file SignalUserConfigTemplate.h
  * @author Ali Mirghasemi (ali.mirghasemi1376@gmail.com)
  * @brief This is template configuration for Signal library
  * @version 0.1
